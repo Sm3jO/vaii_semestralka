@@ -1,0 +1,59 @@
+.giveaway-article {
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin: 20px 0;
+    background-color: #f9f9f9;
+}
+
+.giveaway-article h3 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.giveaway-article img {
+    max-width: 100%;
+    height: auto;
+    margin: 15px 0;
+}
+
+.giveaway-article p {
+    margin: 0 0 15px;
+}
+
+.giveaway-rules {
+    font-weight: bold;
+}
+
+.giveaway-rules ul {
+    list-style: disc inside;
+    padding-left: 20px;
+}
+
+.participate-button {
+    display: inline-block;
+    background-color: #FF5733;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 18px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.participate-button:hover {
+    background-color: #E23E19;
+}
+
+.game-image {
+    width: 600px;
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .game-image {
+        width: 100%;
+        height: auto;
+    }
+}
