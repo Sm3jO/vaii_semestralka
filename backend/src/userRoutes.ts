@@ -56,19 +56,20 @@ router.post('/login', async (req, res) => {
     }
 });
 
-router.put('/users/:id', async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
-        const { id } = req.params;
-        const { username, email, password, profile_picture } = req.body;
-
-        const updatedUser = await updateUser(id, username, email, password, profile_picture);
-        res.status(200).json(updatedUser);
-    } catch (error) {
-        if (error instanceof Error) {
-            res.status(400).json({ message: error.message });
-        } else {
-            res.status(500).json({ message: 'An unknown error occurred' });
+        const { username, email, password } = req.body;
+        const existingUser = await findUserByEmail(email);
+        if (existingUser) {
+            return res.status(409).json({ message: "User already exists" });
         }
+        const newUser = await createUser(username, email, password);
+
+        const token = generateToken(newUser.id);
+
+        res.status(201).json({ message: "User successfully created", user: newUser, token });
+    } catch (error) {
+        res.status(500).json({ message: 'Error during registration process', error });
     }
 });
 

@@ -6,6 +6,8 @@ const ReviewPage: React.FC = () => {
     const [review, setReview] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+
+
     useEffect(() => {
         const fetchReview = async () => {
             try {
@@ -35,14 +37,13 @@ const ReviewPage: React.FC = () => {
                 <div className="p-4">
                     <h1 className="text-2xl font-bold mb-3">{review.title}</h1>
                     <div className="flex items-center mb-4">
-                        <img className="h-10 w-10 rounded-full mr-4" src={review.authorImage || '/default-author-image.jpg'} alt="Author" />
+                        <img className="h-10 w-10 rounded-full mr-4" src={review.authorimage || 'http://localhost:3000/uploads/default-profile-picture.jpg'} alt="Author" />
                         <div>
-                            <p className="text-sm font-semibold">{review.authorName}</p>
+                            <p className="text-sm font-semibold">{review.authorname}</p>
                             <p className="text-xs text-gray-500">Date Added: {new Date(review.created_at).toLocaleDateString()}</p>
-                            {review.updated_at && <p className="text-xs text-gray-500">Last Edit: {new Date(review.updated_at).toLocaleDateString()}</p>}
                         </div>
                     </div>
-                    <p className="text-gray-700">{review.content}</p>
+                    <div dangerouslySetInnerHTML={{ __html: review.content }} />
                 </div>
             </div>
         </div>

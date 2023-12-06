@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -9,8 +9,26 @@ interface ModalProps {
     setIsLogin: (isLogin: boolean) => void;
 }
 
+interface UserData {
+    username: string;
+    email: string;
+    password: string;
+}
+
 const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin }) => {
     const { login } = useAuth();
+
+    const handleRegistration = async (userData : UserData) => {
+        const response = await fetch('http://localhost:3000/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        });
+        return response.json();
+    };
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement;
@@ -21,22 +39,27 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
             password: formData.get('password') as string,
         };
 
-        const apiUrl = isLogin ? 'http://localhost:3000/api/login' : 'http://localhost:3000/api/users';
-
         try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(userData),
-            });
+            if (isLogin) {
+                const response = await fetch('http://localhost:3000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData),
+                });
 
-            const data = await response.json();
-            console.log(data);
+                const data = await response.json();
 
-            if (isLogin && response.ok && data.user && data.token) {
-                login(data.user, data.token);
+                if (response.ok && data.user && data.token) {
+                    login(data.user, data.token);
+                }
+            } else {
+                const data = await handleRegistration(userData);
+
+                if (data.user && data.token) {
+                    login(data.user, data.token);
+                }
             }
         } catch (error) {
             console.error('Error when sending data', error);
@@ -116,6 +139,13 @@ const Header: React.FC = () => {
     const { user, logout } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
     const [isLogin, setIsLogin] = useState<boolean>(true);
+    const [userImage, setUserImage] = useState<string>('');
+
+    useEffect(() => {
+        if (user && user.profile_picture) {
+            setUserImage(user.profile_picture);
+        }
+    }, [user]);
 
     const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
@@ -149,14 +179,14 @@ const Header: React.FC = () => {
                         {user ? (
                             <div className="relative inline-block text-left">
                                 <img
-                                    src={user.profile_picture}
+                                    src={userImage || 'http://localhost:3000/uploads/default-profile-picture.jpg'}
                                     alt="User Avatar"
                                     className="h-8 w-8 rounded-full cursor-pointer"
                                     onClick={toggleDropdown}
                                 />
                                 {isDropdownOpen && (
                                     <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                                        <a href="profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                        <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
                                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={logout}>Sign Out</a>
                                     </div>
                                 )}

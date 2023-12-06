@@ -5,13 +5,13 @@ interface Review {
     id: number;
     title: string;
     content: string;
-    authorName: string;
-    authorImage: string;
-    imageUrl: string;
+    authorname: string;
+    authorimage: string;
+    image_url: string;
     created_at: string;
 }
 
-const ReviewsPage: React.FC = () => {
+const ReviewsList: React.FC = () => {
     const [reviews, setReviews] = useState<Review[]>([]);
 
     useEffect(() => {
@@ -40,9 +40,9 @@ const ReviewsPage: React.FC = () => {
                     created_at={review.created_at}
                     title={review.title}
                     summary={review.content.substring(0, 200) + "..."}
-                    imageUrl={review.imageUrl || "/default-news-image.jpg"}
-                    authorImage={review.authorImage || "/default-author-image.jpg"}
-                    authorName={review.authorName}
+                    image_url={review.image_url || "http://localhost:3000/uploads/image-not-found.png"}
+                    authorImage={review.authorimage || "http://localhost:3000/uploads/default-profile-picture.jpg"}
+                    authorName={review.authorname}
                     readMoreLink={`/reviews/${review.id}`}
                 />
             ))}
@@ -50,4 +50,4 @@ const ReviewsPage: React.FC = () => {
     );
 };
 
-export default ReviewsPage;
+export default ReviewsList;

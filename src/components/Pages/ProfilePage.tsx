@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "../../contexts/AuthContext.tsx"
 import { useNavigate } from 'react-router-dom';
-
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
@@ -38,6 +37,28 @@ const ProfilePage: React.FC = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const target = e.target as HTMLInputElement;
         setUserData({ ...userData, [target.name]: target.value });
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files ? e.target.files[0] : null;
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const response = await fetch('http://localhost:3000/api/images/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error('Image upload failed');
+
+            const data = await response.json();
+            setUserData({ ...userData, profile_picture: data.imageUrl });
+        } catch (error) {
+            console.error("Error uploading image:", error);
+        }
     };
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -96,7 +117,7 @@ const ProfilePage: React.FC = () => {
                 <input type="text" name="username" value={userData.username} onChange={handleChange} placeholder="Username" className="w-full p-2 border border-gray-300 rounded-md"/>
                 <input type="email" name="email" value={userData.email} onChange={handleChange} placeholder="Email" className="w-full p-2 border border-gray-300 rounded-md"/>
                 <input type="password" name="password" value={userData.password} onChange={handleChange} placeholder="New Password" className="w-full p-2 border border-gray-300 rounded-md"/>
-                <input type="text" name="profile_picture" value={userData.profile_picture} onChange={handleChange} placeholder="Profile Picture URL" className="w-full p-2 border border-gray-300 rounded-md"/>
+                <input type="file" onChange={handleImageUpload} />
                 <div className="flex justify-center space-x-4">
                     <button type="submit" className="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
                         Save Changes

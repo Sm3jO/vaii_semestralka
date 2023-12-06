@@ -1,81 +1,47 @@
-import React, { Component } from 'react';
-import ReactQuill, { Quill } from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import ImageResize from 'quill-image-resize-module-react';
-
-Quill.register('modules/imageResize', ImageResize);
+import React, { useState } from 'react';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { CustomUploadAdapterPlugin } from "./UploadAdapter.ts";
 
 interface EditorProps {
-    placeholder?: string;
-    onChange?: (html: string) => void;
-}
-interface EditorState {
-    editorHtml: string;
+    onChange?: (data: string) => void;
 }
 
+const Editor: React.FC<EditorProps> = ({ onChange }) => {
+    const [editorData, setEditorData] = useState<string>('');
 
-class Editor extends Component<EditorProps, EditorState> {
-    static modules = {
-        toolbar: [
-            [{ header: '1' }, { header: '2' }, { font: [] }],
-            [{ size: [] }],
-            ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-            [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-            ['link', 'image', 'video'],
-            ['clean']
-        ],
-        clipboard: {
-            matchVisual: false
-        },
-        imageResize: {
-            parchment: Quill.import('parchment'),
-            modules: ['Resize', 'DisplaySize']
+    const handleEditorChange = (_event: any, editor: any) => {
+        const data = editor.getData();
+        setEditorData(data);
+        if (onChange) {
+            onChange(data);
         }
     };
 
-    static formats = [
-        'header',
-        'font',
-        'size',
-        'bold',
-        'italic',
-        'underline',
-        'strike',
-        'blockquote',
-        'list',
-        'bullet',
-        'indent',
-        'link',
-        'image',
-        'video'
-    ];
-
-    constructor(props: EditorProps) {
-        super(props);
-        this.state = { editorHtml: '' };
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    handleChange(html: string) {
-        this.setState({ editorHtml: html });
-        if (this.props.onChange) {
-            this.props.onChange(html);
-        }
-    }
-
-    render() {
-        return (
-            <ReactQuill
-                theme="snow"
-                onChange={this.handleChange}
-                value={this.state.editorHtml}
-                modules={Editor.modules}
-                formats={Editor.formats}
-                bounds={'#root'}
-                placeholder={this.props.placeholder}
-            />
-        );
-    }
-}
+    return (
+        <CKEditor
+            editor={ClassicEditor}
+            data={editorData}
+            onChange={handleEditorChange}
+            config={{
+                extraPlugins: [CustomUploadAdapterPlugin],
+                toolbar: {
+                    items: [
+                        'heading', '|',
+                        'bold', 'italic', 'link', 'imageUpload', 'bulletedList', 'numberedList', 'blockQuote', '|',
+                        'insertTable', 'tableColumn', 'tableRow', 'mergeTableCells', '|',
+                        'undo', 'redo',
+                    ]
+                },
+                image: {
+                    toolbar: ['imageTextAlternative'],
+                },
+                simpleUpload: {
+                    uploadUrl: 'http://localhost:3000/api/images/upload',
+                }
+            }}
+        />
+    );
+};
 
 export default Editor;

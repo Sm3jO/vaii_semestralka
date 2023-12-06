@@ -2,38 +2,22 @@ import express from 'express';
 import pool from './database';
 import { authenticate } from './authMiddleware';
 
+
 const router = express.Router();
 
-router.post('/', authenticate, async (req: any, res) => { // Note the use of 'any' here
-    const { title, content } = req.body;
-    const author_id = req.userId;
+router.post('/', authenticate, async (req: any, res) => {
+    const { title, content, author_id, image_url } = req.body;
 
     try {
         const { rows } = await pool.query(
-            'INSERT INTO reviews (title, content, author_id) VALUES ($1, $2, $3) RETURNING *',
-            [title, content, author_id]
+            'INSERT INTO reviews (title, content, author_id, image_url) VALUES ($1, $2, $3, $4) RETURNING *',
+            [title, content, author_id, image_url]
         );
         res.status(201).json(rows[0]);
     } catch (error) {
         res.status(500).json({ message: 'Error adding review', error });
     }
 });
-
-/*
-router.post('/', async (req, res) => {
-    const { title, content, author_id } = req.body;
-
-    try {
-        const { rows } = await pool.query(
-            'INSERT INTO reviews (title, content, author_id) VALUES ($1, $2, $3) RETURNING *',
-            [title, content, author_id]
-        );
-        res.status(201).json(rows[0]);
-    } catch (error) {
-        res.status(500).json({ message: 'Error adding review', error });
-    }
-});
-*/
 
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
@@ -42,7 +26,7 @@ router.get('/:id', async (req, res) => {
         const { rows } = await pool.query(`
             SELECT r.*, u.username as authorName, u.profile_picture as authorImage
             FROM reviews r
-            JOIN users u ON r.author_id = u.id
+                     JOIN users u ON r.author_id = u.id
             WHERE r.id = $1
         `, [id]);
         if (rows.length === 0) {
@@ -54,6 +38,18 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+router.get('/', async (req, res) => {
+    try {
+        const { rows } = await pool.query(`
+            SELECT r.*, u.username as authorName, u.profile_picture as authorImage
+            FROM reviews r
+            JOIN users u ON r.author_id = u.id
+        `);
+        res.json({ reviews: rows });
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving reviews', error });
+    }
+});
 
 router.put('/:id', async (req, res) => {
     const { id } = req.params;

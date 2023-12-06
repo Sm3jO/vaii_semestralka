@@ -10,10 +10,11 @@ export const generateToken = (userId: string) => {
 export const createUser = async (username: string, email: string, password: string) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const defaultProfilePicture = 'http://localhost:3000/uploads/default-profile-picture.jpg';
 
     const { rows } = await pool.query(
-        'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *',
-        [username, email, hashedPassword]
+        'INSERT INTO users (username, email, password, profile_picture) VALUES ($1, $2, $3, $4) RETURNING *',
+        [username, email, hashedPassword, defaultProfilePicture]
     );
     return rows[0];
 };
