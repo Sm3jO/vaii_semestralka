@@ -73,7 +73,7 @@ const ProfilePage: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Include the token here
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify(userData),
             });
@@ -97,7 +97,7 @@ const ProfilePage: React.FC = () => {
                 const response = await fetch(`http://localhost:3000/api/users/${user.id}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include the token here
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
 
