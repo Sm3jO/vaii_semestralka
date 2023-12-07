@@ -73,6 +73,7 @@ const ProfilePage: React.FC = () => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Include the token here
                 },
                 body: JSON.stringify(userData),
             });
@@ -89,19 +90,23 @@ const ProfilePage: React.FC = () => {
 
     const handleDeleteAccount = async () => {
         if (!user || !user.id) return;
+
         const confirmDelete = window.confirm("Are you sure you want to delete your account?");
         if (confirmDelete) {
             try {
                 const response = await fetch(`http://localhost:3000/api/users/${user.id}`, {
                     method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Include the token here
+                    }
                 });
+
                 if (response.ok) {
                     logout();
                     navigate('/reviews');
                     setShowDeleteMessage(true);
                     setTimeout(() => setShowDeleteMessage(false), 3000);
-                }
-                else {
+                } else {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
             } catch (error) {
