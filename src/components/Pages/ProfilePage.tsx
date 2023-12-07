@@ -20,8 +20,13 @@ const ProfilePage: React.FC = () => {
         const fetchUserData = async () => {
             if (!user || !user.id) return;
             try {
+
+                console.log(`PUT URL: http://localhost:3000/api/users/${user.id}`);
+                console.log("userData:", userData);
                 const response = await fetch(`http://localhost:3000/api/users/${user.id}`);
                 if (!response.ok) {
+                    console.error(`HTTP error! status: ${response.status}`);
+                    console.error("Response Text:", await response.text());
                     throw new Error("Network response was not ok");
                 }
                 const data = await response.json();
@@ -44,6 +49,7 @@ const ProfilePage: React.FC = () => {
         const formData = new FormData();
         formData.append('image', file);
         try {
+
             const response = await fetch('http://localhost:3000/api/images/upload', {
                 method: 'POST',
                 body: formData,

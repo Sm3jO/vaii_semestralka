@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import {createUser, findUserByEmail, updateUser, findUserById, deleteUser, generateToken} from "./userControl";
+import {authenticate} from "./authMiddleware";
 
 const router = express.Router();
 
@@ -73,7 +74,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', authenticate , async (req, res) => {
     try {
         const { id } = req.params;
         await deleteUser(id);
