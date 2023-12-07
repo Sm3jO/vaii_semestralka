@@ -39,18 +39,23 @@ router.get('/:id', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+    const defaultLimit = 100;
+
+    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
+
     try {
         const { rows } = await pool.query(`
             SELECT r.*, u.username as authorName, u.profile_picture as authorImage
             FROM reviews r
             JOIN users u ON r.author_id = u.id
-        `);
+            ORDER BY r.created_at DESC
+            LIMIT $1
+        `, [limit]);
         res.json({ reviews: rows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving reviews', error });
     }
 });
-
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;

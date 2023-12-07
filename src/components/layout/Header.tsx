@@ -13,10 +13,12 @@ interface UserData {
     username: string;
     email: string;
     password: string;
+    role: string;
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin }) => {
     const { login } = useAuth();
+    const [error, setError] = useState<string | null>(null);
 
     const handleRegistration = async (userData : UserData) => {
         const response = await fetch('http://localhost:3000/api/register', {
@@ -37,6 +39,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
             username: formData.get('username') as string,
             email: formData.get('email') as string,
             password: formData.get('password') as string,
+            role: formData.get('role') as string,
         };
 
         try {
@@ -53,20 +56,27 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
 
                 if (response.ok && data.user && data.token) {
                     login(data.user, data.token);
+                    setIsOpen(false);
+                } else {
+                    setError('Invalid email or password');
                 }
             } else {
                 const data = await handleRegistration(userData);
 
                 if (data.user && data.token) {
                     login(data.user, data.token);
+                } else {
+                    setError('Registration failed');
                 }
             }
         } catch (error) {
             console.error('Error when sending data', error);
+            setError('An error occurred');
         }
     };
 
     const handleClose = () => {
+        setError(null);
         setIsOpen(false);
     };
     return (
@@ -75,7 +85,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
                 {isLogin ? (
                     <div>
                         <h3 className="text-xl font-medium text-center">Welcome Back</h3>
-                        {/* Login */}
                         <div className="px-6 py-4">
                             <form onSubmit={handleSubmit}>
                                 <div className="w-full mt-4">
@@ -103,7 +112,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
                 ) : (
                     <div>
                         <h3 className="text-xl font-medium text-center">Create an Account</h3>
-                        {/* Register */}
                         <div className="px-6 py-4">
                             <form onSubmit={handleSubmit}>
                                 <div className="w-full mt-4">
@@ -128,16 +136,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
                         </div>
                     </div>
                 )}
-                <button onClick={handleClose} className="absolute top-0 right-0 p-2">X</button>
+                <button onClick={handleClose} className="absolute top-2 right-2 p-2">
+                    X
+                </button>
+                {error && <div className="text-red-500 text-center mt-2">{error}</div>}
             </div>
         </div>
     );
 };
 
 const Header: React.FC = () => {
-    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const { user, logout } = useAuth();
-    const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isLogin, setIsLogin] = useState<boolean>(true);
     const [userImage, setUserImage] = useState<string>('');
 
@@ -147,34 +158,49 @@ const Header: React.FC = () => {
         }
     }, [user]);
 
-    const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    const openModal = () => {
+        setIsModalOpen(true);
+        setIsMenuOpen(false);
+    };
 
     return (
-        <nav className="bg-white border-gray-200 dark:bg-gray-900">
+        <nav className="bg-white text-black border-gray-200">
             <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <a href="#" className="flex items-center space-x-3 rtl:space-x-reverse">
-                    <img src="https://flowbite.com/docs/images/logo.svg" className="h-8" alt="Flowbite Logo" />
-                    <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Flowbite</span>
+                    <h1 className="text-lg font-bold">Gaming Paradise</h1>
                 </a>
-                <button onClick={() => setIsModalOpen(true)} className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-default" aria-expanded="false">
-                    <span className="sr-only">Open main menu</span>
-                    <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+                <button
+                    onClick={toggleMenu}
+                    className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    aria-controls="navbar-default"
+                    aria-expanded="false">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
+
                 </button>
-                <div className="hidden w-full md:block md:w-auto" id="navbar-default">
-                    <ul className="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
+                <div className={`${isMenuOpen ? 'block' : 'hidden'} w-full md:block md:w-auto`} id="navbar-default">
+                    <ul className="flex flex-col p-4 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white">
                         <li>
-                            <a href="#" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Home</a>
+                            <Link to="/home" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Home</Link>
+                        </li>
+                        {user && user.role === 'admin' && (
+                            <li>
+                                <Link to="/create-post" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Create Post</Link>
+                            </li>
+                        )}
+                        <li>
+                            <Link to="/news" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">News</Link>
                         </li>
                         <li>
-                            <a href="#" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">About</a>
+                            <Link to="/giveaways" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Giveaways</Link>
                         </li>
                         <li>
-                            <a href="#" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Services</a>
-                        </li>
-                        <li>
-                            <Link to="reviews" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent">Reviews</Link>
+                            <Link to="/reviews" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Reviews</Link>
                         </li>
                         {user ? (
                             <div className="relative inline-block text-left">
@@ -182,9 +208,9 @@ const Header: React.FC = () => {
                                     src={userImage || 'http://localhost:3000/uploads/default-profile-picture.jpg'}
                                     alt="User Avatar"
                                     className="h-8 w-8 rounded-full cursor-pointer"
-                                    onClick={toggleDropdown}
+                                    onClick={toggleMenu}
                                 />
-                                {isDropdownOpen && (
+                                {isMenuOpen && (
                                     <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                                         <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
                                         <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={logout}>Sign Out</a>
@@ -192,7 +218,7 @@ const Header: React.FC = () => {
                                 )}
                             </div>
                         ) : (
-                            <button onClick={() => setIsModalOpen(true)} className="text-sm">Sign In</button>
+                            <button onClick={openModal} className="text-sm">Sign In</button>
                         )}
                     </ul>
                 </div>

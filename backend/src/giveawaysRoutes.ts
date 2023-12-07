@@ -19,8 +19,19 @@ router.post('/', authenticate, async (req: any, res) => {
 });
 
 router.get('/', async (req, res) => {
+    const defaultLimit = 100;
+
+
+    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
+
     try {
-        const { rows } = await pool.query('SELECT g.*, u.username as authorName, u.profile_picture as authorImage FROM giveaways g JOIN users u ON g.author_id = u.id');
+        const { rows } = await pool.query(`
+            SELECT g.*, u.username as authorName, u.profile_picture as authorImage
+            FROM giveaways g
+            JOIN users u ON g.author_id = u.id
+            ORDER BY g.created_at DESC
+            LIMIT $1
+        `, [limit]);
         res.json({ giveaways: rows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving giveaways', error });
@@ -36,6 +47,7 @@ router.get('/:id', async (req, res) => {
             FROM giveaways g
             JOIN users u ON g.author_id = u.id
             WHERE g.id = $1
+                order by g.created_at DESC 
         `, [id]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Giveaway not found' });

@@ -35,7 +35,7 @@ export const findUserById = async (id: string) => {
     return rows[0];
 };
 
-export const findUserByEmail = async (email : string) => {
+export const findUserByEmail = async (email: string) => {
     const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     return rows[0];
 };

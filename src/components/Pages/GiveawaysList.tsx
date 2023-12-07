@@ -40,8 +40,8 @@ const GiveawaysList: React.FC = () => {
                     key={giveaway.id}
                     title={giveaway.title}
                     summary={giveaway.content.substring(0, 200) + "..."}
-                    image_url={giveaway.image_url || "/default-news-image.jpg"}
-                    authorImage={giveaway.authorimage || "/default-author-image.jpg"}
+                    image_url={giveaway.image_url || "http://localhost:3000/uploads/image-not-found.png"}
+                    authorImage={giveaway.authorimage || "http://localhost:3000/uploads/default-profile-picture.jpg"}
                     authorName={giveaway.authorname}
                     created_at={giveaway.created_at}
                     participant_count={giveaway.participant_count}

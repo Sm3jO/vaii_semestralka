@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from "../../contexts/AuthContext.tsx"
+import { useAuth } from "../../contexts/AuthContext.tsx";
 import { useNavigate } from 'react-router-dom';
+
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
@@ -12,14 +13,14 @@ const ProfilePage: React.FC = () => {
         profile_picture: '',
         created_at: '',
     });
+    const [showUpdateMessage, setShowUpdateMessage] = useState(false);
+    const [showDeleteMessage, setShowDeleteMessage] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
             if (!user || !user.id) return;
-
             try {
                 const response = await fetch(`http://localhost:3000/api/users/${user.id}`);
-
                 if (!response.ok) {
                     throw new Error("Network response was not ok");
                 }
@@ -28,9 +29,7 @@ const ProfilePage: React.FC = () => {
             } catch (error) {
                 console.error("Error fetching user data:", error);
             }
-
         };
-
         fetchUserData();
     }, [user]);
 
@@ -42,31 +41,27 @@ const ProfilePage: React.FC = () => {
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files ? e.target.files[0] : null;
         if (!file) return;
-
         const formData = new FormData();
         formData.append('image', file);
-
         try {
             const response = await fetch('http://localhost:3000/api/images/upload', {
                 method: 'POST',
                 body: formData,
             });
-
             if (!response.ok) throw new Error('Image upload failed');
-
             const data = await response.json();
             setUserData({ ...userData, profile_picture: data.imageUrl });
         } catch (error) {
             console.error("Error uploading image:", error);
         }
     };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!user || !user.id) {
             console.error("User or user ID is undefined");
             return;
         }
-
         try {
             const response = await fetch(`http://localhost:3000/api/users/${user.id}`, {
                 method: 'PUT',
@@ -75,9 +70,11 @@ const ProfilePage: React.FC = () => {
                 },
                 body: JSON.stringify(userData),
             });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
+            } else {
+                setShowUpdateMessage(true);
+                setTimeout(() => setShowUpdateMessage(false), 3000);
             }
         } catch (error) {
             console.error("Error updating user data:", error);
@@ -86,17 +83,17 @@ const ProfilePage: React.FC = () => {
 
     const handleDeleteAccount = async () => {
         if (!user || !user.id) return;
-
         const confirmDelete = window.confirm("Are you sure you want to delete your account?");
         if (confirmDelete) {
             try {
                 const response = await fetch(`http://localhost:3000/api/users/${user.id}`, {
                     method: 'DELETE',
                 });
-
                 if (response.ok) {
                     logout();
                     navigate('/reviews');
+                    setShowDeleteMessage(true);
+                    setTimeout(() => setShowDeleteMessage(false), 3000);
                 }
                 else {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -113,7 +110,6 @@ const ProfilePage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div><strong>ID:</strong> {userData.id}</div>
                 <div><strong>Registered:</strong> {new Date(userData.created_at).toLocaleDateString()}</div>
-
                 <input type="text" name="username" value={userData.username} onChange={handleChange} placeholder="Username" className="w-full p-2 border border-gray-300 rounded-md"/>
                 <input type="email" name="email" value={userData.email} onChange={handleChange} placeholder="Email" className="w-full p-2 border border-gray-300 rounded-md"/>
                 <input type="password" name="password" value={userData.password} onChange={handleChange} placeholder="New Password" className="w-full p-2 border border-gray-300 rounded-md"/>
@@ -127,6 +123,16 @@ const ProfilePage: React.FC = () => {
                     </button>
                 </div>
             </form>
+            {showUpdateMessage && (
+                <div className="alert alert-success">
+                    Your credentials were successfully updated.
+                </div>
+            )}
+            {showDeleteMessage && (
+                <div className="alert alert-success">
+                    Your account was successfully deleted.
+                </div>
+            )}
         </div>
     );
 };

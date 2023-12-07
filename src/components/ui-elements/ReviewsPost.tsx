@@ -11,25 +11,27 @@ interface PostProps {
     created_at: string;
 }
 
+const removeImageTags = (htmlString : String) => {
+    return htmlString.replace(/<img[^>]*>/g, "");
+};
+
 const ReviewsPost: React.FC<PostProps> = ({ category, title, summary, image_url, authorImage, authorName, readMoreLink ,created_at}) => {
     const defaultAuthorImage = 'http://localhost:3000/uploads/default-profile-picture.jpg';
+    const NoImageSummary = removeImageTags(summary);
     return (
-        <section className="bg-white dark:bg-gray-900">
+        <section className="bg-white">
             <div className="container px-6 py-10 mx-auto">
                 <div className="lg:-mx-6 lg:flex lg:items-center">
                     <img className="object-cover w-full lg:mx-6 lg:w-1/2 rounded-xl h-72 lg:h-96" src={image_url} alt="" />
                     <div className="mt-6 lg:w-1/2 lg:mt-0 lg:mx-6">
                         <p className="text-sm text-blue-500 uppercase">{category}</p>
-                        <p className="mt-3 text-sm text-gray-500 dark:text-gray-300">
-                            Date Added: {created_at}
-                        </p>
-                        <a href="#" className="block mt-4 text-2xl font-semibold text-gray-800 hover:underline dark:text-white">
+
+                        <a href="#" className="block mt-4 text-2xl font-semibold text-gray-800 hover:underline">
                             {title}
                         </a>
 
-                        <p className="mt-3 text-sm text-gray-500 dark:text-gray-300">
-                            {summary}
-                        </p>
+                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: NoImageSummary }}>
+                        </div>
                         <a href={readMoreLink} className="inline-block mt-2 text-blue-500 underline hover:text-blue-400">Read more</a>
                         <div className="flex items-center mt-6">
                             <img
@@ -38,7 +40,10 @@ const ReviewsPost: React.FC<PostProps> = ({ category, title, summary, image_url,
                                 alt="Author"
                             />
                             <div className="mx-4">
-                                <h1 className="text-sm text-gray-700 dark:text-gray-200">{authorName}</h1>
+                                <h1 className="text-sm text-gray-700">{authorName}</h1>
+                                <p className="text-xs text-gray-500">
+                                    Date Added: {new Date(created_at).toLocaleString()}
+                                </p>
                             </div>
                         </div>
                     </div>

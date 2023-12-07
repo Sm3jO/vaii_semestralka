@@ -1,4 +1,4 @@
-import React, { useState, useContext, ChangeEvent, FormEvent } from 'react';
+import React, {useState, useContext, ChangeEvent, FormEvent} from 'react';
 import Editor from '../ui-elements/Editor';
 import AuthContext from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -26,16 +26,6 @@ const PostCreatePage: React.FC = () => {
         }
     };
 
-    const getCategoryPath = (category : String) => {
-        switch (category) {
-            case 'giveaway':
-                return 'giveaways';
-            case 'review':
-                return 'reviews';
-            default:
-                return category;
-        }
-    };
     const uploadImage = async (imageFile: File): Promise<ImageResponse | null> => {
         const formData = new FormData();
         formData.append('image', imageFile);
@@ -50,6 +40,17 @@ const PostCreatePage: React.FC = () => {
         } catch (error) {
             console.error("Error uploading image:", error);
             return null;
+        }
+    };
+
+    const getCategoryPath = (category: String) => {
+        switch (category) {
+            case 'giveaway':
+                return 'giveaways';
+            case 'review':
+                return 'reviews';
+            default:
+                return category;
         }
     };
 
@@ -70,7 +71,7 @@ const PostCreatePage: React.FC = () => {
             ...(category === 'giveaway' && { participant_count: 0, expiration_date: expirationDate })
         };
 
-        const url = category === 'giveaway' ? 'http://localhost:3000/api/giveaways' : 'http://localhost:3000/api/reviews';
+        const url = `http://localhost:3000/api/${getCategoryPath(category)}`;
 
         try {
             const response = await fetch(url, {
@@ -88,8 +89,7 @@ const PostCreatePage: React.FC = () => {
             }
 
             const data = await response.json();
-            const path = getCategoryPath(category);
-            navigate(`/${path}/${data.id}`);
+            navigate(`/${getCategoryPath(category)}/${data.id}`);
         } catch (error: any) {
             console.error(`Error creating ${category}:`, error.message);
         }
@@ -115,14 +115,12 @@ const PostCreatePage: React.FC = () => {
                     <option value="giveaway">Giveaway</option>
                 </select>
                 <Editor onChange={handleContentChange} />
-                {(category === 'review' || category === 'giveaway') && (
-                    <input
-                        type="file"
-                        onChange={handleImageChange}
-                        accept="image/*"
-                        className="mb-4"
-                    />
-                )}
+                <input
+                    type="file"
+                    onChange={handleImageChange}
+                    accept="image/*"
+                    className="mb-4"
+                />
                 {category === 'giveaway' && (
                     <input
                         type="date"
