@@ -41,23 +41,29 @@ router.get('/:id', async (req, res) => {
 
 router.get('/', async (req, res) => {
     const defaultLimit = 100;
+    const defaultPage = 1;
     const searchTerm = req.query.search?.toString().toLowerCase() ?? '';
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
+    const page = typeof req.query.page === 'string' ? parseInt(req.query.page, 10) : defaultPage;
+    const offset = (page - 1) * limit;
 
     try {
+        const totalQuery = await pool.query('SELECT COUNT(*) FROM reviews');
+        const totalRows = parseInt(totalQuery.rows[0].count, 10);
         const { rows } = await pool.query(`
             SELECT r.*, u.username as authorName, u.profile_picture as authorImage
             FROM reviews r
             JOIN users u ON r.author_id = u.id
             WHERE LOWER(r.title) LIKE $1
             ORDER BY r.created_at DESC
-            LIMIT $2
-        `, [`%${searchTerm}%`, limit]);
-        res.json({ reviews: rows });
+            LIMIT $2 OFFSET $3
+        `, [`%${searchTerm}%`, limit, offset]);
+        res.json({ reviews: rows, totalCount: totalRows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving reviews', error });
     }
 });
+
 router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;

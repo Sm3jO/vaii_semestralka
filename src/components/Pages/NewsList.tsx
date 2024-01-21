@@ -13,23 +13,28 @@ interface News {
 
 const NewsList: React.FC = () => {
     const [news, setNews] = useState<News[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
 
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const response = await fetch('http://localhost:3000/api/news');
+                const limit = 10;
+                const response = await fetch(`http://localhost:3000/api/news?page=${currentPage}&limit=${limit}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
                 setNews(data.news);
+                setTotalPages(Math.ceil(data.totalCount / limit));
             } catch (error) {
                 console.error("Error fetching news:", error);
             }
         };
 
         fetchNews();
-    }, []);
+        window.scrollTo(0, 0);
+    }, [currentPage]);
 
     return (
         <div>
@@ -45,7 +50,19 @@ const NewsList: React.FC = () => {
                     readMoreLink={`/news/${newsItem.id}`}
                 />
             ))}
+            <div className="flex justify-center mt-8">
+                <button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage <= 1} className="mx-2 px-4 py-2 text-sm text-black bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Previous Page
+                </button>
+                <span className="text-black font-bold">
+                    {currentPage} of {totalPages}
+                </span>
+                <button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage >= totalPages} className="mx-2 px-4 py-2 text-sm text-black bg-white border border-gray-300 rounded hover:bg-gray-100">
+                    Next Page
+                </button>
+            </div>
         </div>
+
     );
 };
 

@@ -21,19 +21,24 @@ router.post('/', authenticate, async (req: any, res) => {
 
 router.get('/', async (req, res) => {
     const defaultLimit = 100;
+    const defaultPage = 1;
     const searchTerm = req.query.search?.toString().toLowerCase() ?? '';
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
+    const page = typeof req.query.page === 'string' ? parseInt(req.query.page, 10) : defaultPage;
+    const offset = (page - 1) * limit;
 
     try {
+        const totalQuery = await pool.query('SELECT COUNT(*) FROM giveaways');
+        const totalRows = parseInt(totalQuery.rows[0].count, 10);
         const { rows } = await pool.query(`
             SELECT g.*, u.username as authorName, u.profile_picture as authorImage
             FROM giveaways g
             JOIN users u ON g.author_id = u.id
             WHERE LOWER(g.title) LIKE $1
             ORDER BY g.created_at DESC
-            LIMIT $2
-        `, [`%${searchTerm}%`, limit]);
-        res.json({ giveaways: rows });
+            LIMIT $2 OFFSET $3
+        `, [`%${searchTerm}%`, limit, offset]);
+        res.json({ giveaways: rows, totalCount: totalRows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving giveaways', error });
     }

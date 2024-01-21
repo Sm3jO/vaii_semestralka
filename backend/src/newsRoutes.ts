@@ -41,19 +41,24 @@ router.get('/:id', async (req, res) => {
 
 router.get('/', async (req, res) => {
     const defaultLimit = 100;
-    const searchTerm = req.query.search?.toString().toLowerCase() || '';
+    const defaultPage = 1;
+    const searchTerm = req.query.search?.toString().toLowerCase() ?? '';
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
+    const page = typeof req.query.page === 'string' ? parseInt(req.query.page, 10) : defaultPage;
+    const offset = (page - 1) * limit;
 
     try {
+        const totalQuery = await pool.query('SELECT COUNT(*) FROM news');
+        const totalRows = parseInt(totalQuery.rows[0].count, 10);
         const { rows } = await pool.query(`
             SELECT n.*, u.username as authorName, u.profile_picture as authorImage
             FROM news n
             JOIN users u ON n.author_id = u.id
             WHERE LOWER(n.title) LIKE $1
             ORDER BY n.created_at DESC
-            LIMIT $2
-        `, [`%${searchTerm}%`, limit]);
-        res.json({ news: rows });
+            LIMIT $2 OFFSET $3
+        `, [`%${searchTerm}%`, limit, offset]);
+        res.json({ news: rows, totalCount: totalRows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving news', error });
     }
