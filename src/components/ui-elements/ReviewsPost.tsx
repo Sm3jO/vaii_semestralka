@@ -29,7 +29,7 @@ const ReviewsPost: React.FC<ReviewsPostProps> = ({ title, summary, image_url, au
                     <img className="object-cover w-full lg:w-1/2 rounded-xl h-72 lg:h-96" src={image_url || defaultImageUrl} alt="News" />
                     <div className="mt-6 lg:w-1/2 lg:mt-0 lg:mx-6">
                         <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
-                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: sanitizedSummary }}>
+                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: sanitizedSummary.substring(0, 200) + '...' }}>
                         </div>
                         <a href={readMoreLink} className="inline-block mt-2 text-blue-500 underline hover:text-blue-400">Read more</a>
                         <div className="flex items-center mt-6">
