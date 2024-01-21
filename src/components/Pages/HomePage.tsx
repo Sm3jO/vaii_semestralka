@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
                 const [newsRes, reviewsRes, giveawaysRes] = await Promise.all([
                     fetch('http://localhost:3000/api/news?limit=3', fetchOptions),
                     fetch('http://localhost:3000/api/reviews?limit=3', fetchOptions),
-                    fetch('http://localhost:3000/api/giveaways?limit=3', fetchOptions)
+                    fetch('http://localhost:3000/api/giveaways/homepage?limit=3', fetchOptions)
                 ]);
 
                 if (newsRes.ok) {

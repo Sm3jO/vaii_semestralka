@@ -39,6 +39,26 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/homepage', async (req, res) => {
+    const defaultLimit = 100;
+    const searchTerm = req.query.search?.toString().toLowerCase() ?? '';
+    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
+
+    try {
+        const { rows } = await pool.query(`
+            SELECT g.*, u.username as authorName, u.profile_picture as authorImage
+            FROM giveaways g
+            JOIN users u ON g.author_id = u.id
+            WHERE LOWER(g.title) LIKE $1 AND g.expiration_date > NOW()
+            ORDER BY g.created_at DESC
+            LIMIT $2
+        `, [`%${searchTerm}%`, limit]);
+        res.json({ giveaways: rows });
+    } catch (error) {
+        res.status(500).json({ message: 'Error retrieving giveaways for homepage', error });
+    }
+});
+
 router.get('/:id', async (req, res) => {
     const { id } = req.params;
 
