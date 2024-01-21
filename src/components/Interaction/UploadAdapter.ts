@@ -5,6 +5,8 @@ class UploadAdapter {
         this.loader = loader;
     }
 
+
+
     upload(): Promise<any> {
         return this.loader.file
             .then((file: File) => new Promise((resolve, reject) => {

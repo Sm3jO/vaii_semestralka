@@ -1,4 +1,5 @@
 import React from 'react';
+import DOMPurify from 'dompurify';
 
 interface NewsPostProps {
     title: string;
@@ -10,14 +11,18 @@ interface NewsPostProps {
     readMoreLink: string;
 }
 
-const removeImageTags = (htmlString : String) => {
+const removeImageTags = (htmlString: string) => {
+    if (!htmlString) return '';
     return htmlString.replace(/<img[^>]*>/g, "");
 };
 
 const NewsPost: React.FC<NewsPostProps> = ({ title, summary, image_url, authorImage, authorName, created_at, readMoreLink }) => {
     const defaultAuthorImage = 'http://localhost:3000/uploads/default-profile-picture.jpg';
     const defaultImageUrl = 'http://localhost:3000/uploads/image-not-found.png';
-    const NoImageSummary = removeImageTags(summary);
+
+
+    const sanitizedSummary = DOMPurify.sanitize(removeImageTags(summary));
+
     return (
         <section className="bg-white">
             <div className="container px-6 py-10 mx-auto">
@@ -25,7 +30,7 @@ const NewsPost: React.FC<NewsPostProps> = ({ title, summary, image_url, authorIm
                     <img className="object-cover w-full lg:w-1/2 rounded-xl h-72 lg:h-96" src={image_url || defaultImageUrl} alt="News" />
                     <div className="mt-6 lg:w-1/2 lg:mt-0 lg:mx-6">
                         <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
-                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: NoImageSummary }}>
+                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: sanitizedSummary }}>
                         </div>
                         <a href={readMoreLink} className="inline-block mt-2 text-blue-500 underline hover:text-blue-400">Read more</a>
                         <div className="flex items-center mt-6">

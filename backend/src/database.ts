@@ -10,4 +10,8 @@ const dbConfig = {
 
 const pool = new Pool(dbConfig);
 
+pool.on('error', (err, client) => {
+    console.error('Unexpected error on client', err);
+    process.exit(-1);
+});
 export default pool;

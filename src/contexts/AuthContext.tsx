@@ -13,24 +13,24 @@ interface AuthContextType {
     token: string | null;
     login: (userData: User, token: string) => void;
     logout: () => void;
+    isAuthor: () => boolean;
+    isAdmin: () => boolean;
 }
 
 const defaultContextValue: AuthContextType = {
     user: null,
     token: null,
     login: () => {},
-    logout: () => {}
+    logout: () => {},
+    isAuthor: () => false,
+    isAdmin: () => false
 };
 
 const AuthContext = createContext<AuthContextType>(defaultContextValue);
 
 export const useAuth = () => React.useContext(AuthContext);
 
-interface AuthProviderProps {
-    children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
 
@@ -58,8 +58,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem('token');
     };
 
+    const isAuthor = () => user?.role === 'author';
+    const isAdmin = () => user?.role === 'admin';
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isAuthor, isAdmin }}>
             {children}
         </AuthContext.Provider>
     );

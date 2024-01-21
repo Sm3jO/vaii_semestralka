@@ -101,7 +101,6 @@ const HomePage: React.FC = () => {
                     reviews.map(review => (
                         <ReviewsPost
                             key={review.id}
-                            category="Reviews"
                             created_at={review.created_at}
                             title={review.title}
                             summary={review.content}

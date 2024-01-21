@@ -1,5 +1,5 @@
 import express from 'express';
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 
 const router = express.Router();
@@ -13,8 +13,19 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ storage: storage });
 
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 1024 * 1024 * 100 },
+    fileFilter: (req, file, cb) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+            cb(new Error('Only image files are allowed!') as any, false);
+        } else {
+            cb(null, true);
+        }
+    },
+});
 
 router.post('/upload', upload.single('image'), (req, res) => {
     if (req.file) {

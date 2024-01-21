@@ -1,5 +1,6 @@
-import express from 'express';
+import express, { Response, Request } from 'express';
 import pool from './database';
+import { CustomRequest } from './customRequest';
 import { authenticate } from './authMiddleware';
 
 const router = express.Router();
@@ -20,8 +21,7 @@ router.post('/', authenticate, async (req: any, res) => {
 
 router.get('/', async (req, res) => {
     const defaultLimit = 100;
-
-
+    const searchTerm = req.query.search?.toString().toLowerCase() ?? '';
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
 
     try {
@@ -29,9 +29,10 @@ router.get('/', async (req, res) => {
             SELECT g.*, u.username as authorName, u.profile_picture as authorImage
             FROM giveaways g
             JOIN users u ON g.author_id = u.id
+            WHERE LOWER(g.title) LIKE $1
             ORDER BY g.created_at DESC
-            LIMIT $1
-        `, [limit]);
+            LIMIT $2
+        `, [`%${searchTerm}%`, limit]);
         res.json({ giveaways: rows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving giveaways', error });
@@ -75,9 +76,25 @@ router.put('/:id', authenticate, async (req, res) => {
 
 router.post('/join/:id', authenticate, async (req: any, res) => {
     const { id } = req.params;
-    const userId = req.userId;
+    const userId = req.user.id;
 
     try {
+
+        const giveawayResult = await pool.query('SELECT expiration_date FROM giveaways WHERE id = $1', [id]);
+        if (giveawayResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Giveaway not found' });
+        }
+
+        const giveaway = giveawayResult.rows[0];
+        const now = new Date();
+        const expirationDate = new Date(giveaway.expiration_date);
+
+
+        if (now > expirationDate) {
+            return res.status(400).json({ message: 'This giveaway has already expired.' });
+        }
+
+
         const checkParticipation = await pool.query(
             'SELECT * FROM user_giveaway WHERE user_id = $1 AND giveaway_id = $2',
             [userId, id]
@@ -87,10 +104,12 @@ router.post('/join/:id', authenticate, async (req: any, res) => {
             return res.status(400).json({ message: 'You have already joined this giveaway.' });
         }
 
+
         await pool.query(
             'INSERT INTO user_giveaway (user_id, giveaway_id) VALUES ($1, $2)',
             [userId, id]
         );
+
 
         const result = await pool.query(
             'UPDATE giveaways SET participant_count = participant_count + 1 WHERE id = $1 RETURNING *',
@@ -98,17 +117,22 @@ router.post('/join/:id', authenticate, async (req: any, res) => {
         );
         res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ message: 'Error joining giveaway', error });
+        console.error('Error joining giveaway:', error);
+        res.status(500).json({ message: 'Error joining giveaway', error: (error as Error).message });
     }
 });
 
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
 
     try {
+        await pool.query('DELETE FROM user_giveaway WHERE giveaway_id = $1', [id]);
+
         await pool.query('DELETE FROM giveaways WHERE id = $1', [id]);
+
         res.status(200).json({ message: 'Giveaway deleted successfully' });
     } catch (error) {
+        console.error('Error deleting giveaway:', error);
         res.status(500).json({ message: 'Error deleting giveaway', error });
     }
 });

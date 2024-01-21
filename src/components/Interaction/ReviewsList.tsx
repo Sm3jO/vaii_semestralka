@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ReviewsPost from '../ui-elements/ReviewsPost';
+import ReviewsPost from '../ui-elements/ReviewsPost.tsx';
 
 interface Review {
     id: number;
@@ -36,7 +36,6 @@ const ReviewsList: React.FC = () => {
             {reviews.map(review => (
                 <ReviewsPost
                     key={review.id}
-                    category="Reviews"
                     created_at={review.created_at}
                     title={review.title}
                     summary={review.content.substring(0, 200) + "..."}

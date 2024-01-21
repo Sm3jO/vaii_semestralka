@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 
 interface ModalProps {
     isOpen: boolean;
@@ -13,20 +13,46 @@ interface UserData {
     username: string;
     email: string;
     password: string;
-    role: string;
+    confirmPassword: string;
+    role?: string;
 }
+
+interface RegistrationData {
+    username: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+}
+
+
 
 const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin }) => {
     const { login } = useAuth();
     const [error, setError] = useState<string | null>(null);
 
-    const handleRegistration = async (userData : UserData) => {
+    const validateUserData = (userData: UserData): string | null => {
+        if (!userData.username || userData.username.length < 3 || userData.username.length > 30) {
+            return 'Username must be between 3 and 30 characters';
+        }
+        if (!userData.email.includes('@')) {
+            return 'Invalid email format';
+        }
+        if (!new RegExp('^[a-zA-Z0-9]{8,30}$').test(userData.password)) {
+            return 'Password must be 8 to 30 characters and alphanumeric';
+        }
+        if (userData.password !== userData.confirmPassword) {
+            return 'Passwords do not match';
+        }
+        return null;
+    };
+
+    const handleRegistration = async (registrationData: RegistrationData) => {
         const response = await fetch('http://localhost:3000/api/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(userData),
+            body: JSON.stringify(registrationData),
         });
         return response.json();
     };
@@ -35,15 +61,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);
-        const userData = {
-            username: formData.get('username') as string,
-            email: formData.get('email') as string,
-            password: formData.get('password') as string,
-            role: formData.get('role') as string,
-        };
 
-        try {
-            if (isLogin) {
+        if (isLogin) {
+            const userData = {
+                email: formData.get('email') as string,
+                password: formData.get('password') as string,
+            };
+
+            try {
                 const response = await fetch('http://localhost:3000/api/login', {
                     method: 'POST',
                     headers: {
@@ -60,18 +85,44 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
                 } else {
                     setError('Invalid email or password');
                 }
-            } else {
-                const data = await handleRegistration(userData);
+            } catch (error) {
+                console.error('Error when sending data', error);
+                setError('An error occurred');
+            }
+        } else {
+            const userData: UserData = {
+                username: formData.get('username') as string,
+                email: formData.get('email') as string,
+                password: formData.get('password') as string,
+                confirmPassword: formData.get('confirmPassword') as string,
+            };
+
+            const validationError = validateUserData(userData);
+            if (validationError) {
+                setError(validationError);
+                return;
+            }
+
+
+            const registrationData: RegistrationData = {
+                username: userData.username,
+                email: userData.email,
+                password: userData.password,
+                confirmPassword: userData.confirmPassword,
+            };
+
+            try {
+                const data = await handleRegistration(registrationData);
 
                 if (data.user && data.token) {
                     login(data.user, data.token);
                 } else {
                     setError('Registration failed');
                 }
+            } catch (error) {
+                console.error('Error when sending data', error);
+                setError('An error occurred');
             }
-        } catch (error) {
-            console.error('Error when sending data', error);
-            setError('An error occurred');
         }
     };
 
@@ -123,6 +174,15 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
                                 <div className="w-full mt-4">
                                     <input className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-500 bg-white border rounded-lg focus:border-blue-400 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300" type="password" placeholder="Password" aria-label="Password" name="password" />
                                 </div>
+                                <div className="w-full mt-4">
+                                    <input
+                                        className="block w-full px-4 py-2 mt-2 text-gray-700 placeholder-gray-500 bg-white border rounded-lg focus:border-blue-400 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300"
+                                        type="password"
+                                        placeholder="Confirm Password"
+                                        aria-label="Confirm Password"
+                                        name="confirmPassword"
+                                    />
+                                </div>
                                 <div className="flex items-center justify-between mt-4">
                                     <button className="px-6 py-2 text-sm font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-blue-500 rounded-lg hover:bg-blue-400 focus:outline-none focus:ring focus:ring-blue-300 focus:ring-opacity-50">
                                         Sign Up
@@ -151,6 +211,8 @@ const Header: React.FC = () => {
     const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
     const [isLogin, setIsLogin] = useState<boolean>(true);
     const [userImage, setUserImage] = useState<string>('');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (user && user.profile_picture) {
@@ -162,6 +224,11 @@ const Header: React.FC = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
+    const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        navigate(`/search?term=${searchTerm}`);
+    };
+
     const openModal = () => {
         setIsModalOpen(true);
         setIsMenuOpen(false);
@@ -170,37 +237,65 @@ const Header: React.FC = () => {
     return (
         <nav className="bg-white text-black border-gray-200">
             <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                <a href="#" className="flex items-center space-x-3 rtl:space-x-reverse">
+                <Link to="/home" className="flex items-center space-x-3 rtl:space-x-reverse hover:text-blue-500 hover:underline">
                     <h1 className="text-lg font-bold">Gaming Paradise</h1>
-                </a>
+                </Link>
                 <button
                     onClick={toggleMenu}
                     className="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
                     aria-controls="navbar-default"
-                    aria-expanded="false">
+                    aria-expanded="false"
+                >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
-
                 </button>
+
+                <form onSubmit={handleSearchSubmit} className="flex items-center">
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search..."
+                        className="px-4 py-2 border rounded-l-lg"
+                    />
+                    <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-700"
+                    >
+                        Search
+                    </button>
+                </form>
+
                 <div className={`${isMenuOpen ? 'block' : 'hidden'} w-full md:block md:w-auto`} id="navbar-default">
                     <ul className="flex flex-col p-4 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:border-0 md:bg-white">
                         <li>
-                            <Link to="/home" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Home</Link>
+                            <Link to="/home" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Home</Link>
                         </li>
                         {user && user.role === 'admin' && (
+                            <>
+                                <li>
+                                    <Link to="/create-post" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Create Post</Link>
+                                </li>
+                                <li>
+                                    <Link to="/admin" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Admin</Link>
+                                </li>
+                            </>
+                        )}
+
+                        {user && user.role === 'author' && (
                             <li>
-                                <Link to="/create-post" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Create Post</Link>
+                                <Link to="/create-post" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Create Post</Link>
                             </li>
                         )}
                         <li>
-                            <Link to="/news" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">News</Link>
+                            <Link to="/news" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">News</Link>
                         </li>
                         <li>
-                            <Link to="/giveaways" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Giveaways</Link>
+                            <Link to="/giveaways" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Giveaways</Link>
                         </li>
                         <li>
-                            <Link to="/reviews" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:p-0">Reviews</Link>
+                            <Link to="/reviews" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Reviews</Link>
                         </li>
                         {user ? (
                             <div className="relative inline-block text-left">
@@ -212,13 +307,13 @@ const Header: React.FC = () => {
                                 />
                                 {isMenuOpen && (
                                     <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                                        <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</Link>
-                                        <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={logout}>Sign Out</a>
+                                        <Link to="/profile" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Profile</Link>
+                                        <a href="#" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0" onClick={logout}>Sign Out</a>
                                     </div>
                                 )}
                             </div>
                         ) : (
-                            <button onClick={openModal} className="text-sm">Sign In</button>
+                            <button onClick={openModal} className="text-sm hover:text-blue-500">Sign In</button>
                         )}
                     </ul>
                 </div>

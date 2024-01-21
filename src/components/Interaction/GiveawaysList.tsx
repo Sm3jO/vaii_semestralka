@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import GiveawaysPost from '../ui-elements/GiveawaysPost';
+import GiveawaysPost from '../ui-elements/GiveawaysPost.tsx';
 
 interface Giveaway {
     id: number;

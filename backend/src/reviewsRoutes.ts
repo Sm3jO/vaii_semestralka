@@ -1,6 +1,7 @@
-import express from 'express';
+import express, { Response, Request } from 'express';
 import pool from './database';
 import { authenticate } from './authMiddleware';
+import {CustomRequest} from "./customRequest";
 
 
 const router = express.Router();
@@ -40,7 +41,7 @@ router.get('/:id', async (req, res) => {
 
 router.get('/', async (req, res) => {
     const defaultLimit = 100;
-
+    const searchTerm = req.query.search?.toString().toLowerCase() ?? '';
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit, 10) : defaultLimit;
 
     try {
@@ -48,9 +49,10 @@ router.get('/', async (req, res) => {
             SELECT r.*, u.username as authorName, u.profile_picture as authorImage
             FROM reviews r
             JOIN users u ON r.author_id = u.id
+            WHERE LOWER(r.title) LIKE $1
             ORDER BY r.created_at DESC
-            LIMIT $1
-        `, [limit]);
+            LIMIT $2
+        `, [`%${searchTerm}%`, limit]);
         res.json({ reviews: rows });
     } catch (error) {
         res.status(500).json({ message: 'Error retrieving reviews', error });
@@ -72,13 +74,14 @@ router.put('/:id', async (req, res) => {
 });
 
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req: CustomRequest, res: Response) => {
     const { id } = req.params;
 
     try {
         await pool.query('DELETE FROM reviews WHERE id = $1', [id]);
         res.status(200).json({ message: 'Review deleted successfully' });
     } catch (error) {
+        console.error('Error deleting review:', error);
         res.status(500).json({ message: 'Error deleting review', error });
     }
 });
