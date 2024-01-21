@@ -31,7 +31,7 @@ const GiveawaysPost: React.FC<GiveawaysPostProps> = ({title, summary, image_url,
                     <img className="object-cover w-full lg:w-1/2 rounded-xl h-72 lg:h-96" src={image_url || defaultImageUrl} alt="Giveaway" />
                     <div className="mt-6 lg:w-1/2 lg:mt-0 lg:mx-6">
                         <h2 className="text-2xl font-semibold text-gray-800">{title}</h2>
-                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: sanitizedSummary }}>
+                        <div className="mt-3 text-sm text-gray-500" dangerouslySetInnerHTML={{ __html: sanitizedSummary.substring(0, 200) + '...' }}>
                         </div>
                         <div className="mt-3 text-sm text-gray-500">
                             Giveaway Ending: {new Date(expiration_date).toLocaleDateString()}
