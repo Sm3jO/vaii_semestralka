@@ -116,6 +116,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, isLogin, setIsLogin })
 
                 if (data.user && data.token) {
                     login(data.user, data.token);
+                    setIsOpen(false);
                 } else {
                     setError('Registration failed');
                 }
