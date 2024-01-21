@@ -309,7 +309,7 @@ const Header: React.FC = () => {
                                 {isMenuOpen && (
                                     <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                                         <Link to="/profile" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0">Profile</Link>
-                                        <a href="#" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0" onClick={logout}>Sign Out</a>
+                                        <Link to="/home" className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 hover:text-blue-500 md:hover:bg-transparent md:p-0" onClick={logout}>Sign Out</Link>
                                     </div>
                                 )}
                             </div>
